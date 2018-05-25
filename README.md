@@ -15,4 +15,6 @@ com.databricks.spark.corenlp.functions:
 
 ## Example
 sentence: really|O excited|O to|O hear|O of|O this|O restaurant|O coming|O to|O toronto|LOCATION |O [3] 
+
+
 sentence: word1|NER-Tag ... wordn|NER-Tag [sentiment]
