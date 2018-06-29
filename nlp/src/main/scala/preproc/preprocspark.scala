@@ -32,9 +32,10 @@ object PreprocSpark {
 
     // Load input data, create schema defintion and dataframe
     val spark_context = spark_session.sparkContext
-    val textfiles_rdd = spark_context.wholeTextFiles(input_dir, minPartitions = min_num_partitions).cache
+    val textfiles_rdd: RDD[(String, String)] = spark_context.wholeTextFiles(input_dir, minPartitions = min_num_partitions).cache
     val num_files = textfiles_rdd.count()
-    val textfiles_rows = textfiles_rdd.values.zipWithIndex.map(pair => Row(pair._2, pair._1.replaceAll("<[^>]*>", "")))
+    val zippedWithIndexRdd: RDD[((String, String), Long)] = textfiles_rdd.zipWithIndex
+    val textfiles_rows: RDD[Row] = zippedWithIndexRdd.map(pair => Row(pair._2, pair._1._2.replaceAll("<[^>]*>", "")))
     val df_schema = StructType(Seq(StructField("index", LongType, true), StructField("text", StringType, true)))
     val textfiles_df = spark_session.createDataFrame(textfiles_rows, df_schema)
 
@@ -64,11 +65,10 @@ object PreprocSpark {
              .replaceAll(regex_singlechar, "")
              .toLowerCase
            (result, pair._2)
-         }
-           /*.filter { pair =>
-           pair._1 != "" & !stop_words.contains(pair._1)
-         }*/
-           .map { pair =>
+         }//.filter { pair =>
+           //pair._2 != "O"
+         //}
+         .map { pair =>
            pair._1 + "|" + pair._2
          }.mkString(" ")
 

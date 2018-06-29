@@ -3,5 +3,7 @@
 .idea/
 project/
 target/
-
-
+combined/resources
+yelp/NOTES
+data/
+tomtomdataextractor/tomtomdataextractor.iml
