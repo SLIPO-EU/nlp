@@ -82,8 +82,7 @@ def repeatReplacer(word):
         return repl_word
 
 
-def spellingCorrection(
-        word):  # enchant does not work on windows systems - exchanged it for the spell library which autocorrects each word
+def spellingCorrection(word):  # enchant does not work on windows systems - exchanged it for the spell library which autocorrects each word
     # spelling correction using enchant dictionary
     dict_name = 'en'
     max_dist = 1
@@ -179,9 +178,6 @@ def main(input):
     result = pool.map(run, chunks)
     pool.close()
     pool.join()
-    #result1 = pd.DataFrame([])  # joining all files
-    #for file in result:
-    #    result1 = result1.append(file)
     combined = pd.concat(result)
     combined = combined.reset_index()
     combined.to_csv('resources/preprocessed_results.csv', encoding='utf-8', index=False)  # save to file
@@ -199,7 +195,6 @@ def run(input):
     review_data['text'] = review_data['text'].apply(textCleaning)  # clean text
     review_data['bag_of_words'] = review_data['text'].apply(textPrepocessing)  # create bag of word
     review_data['yelp_rating'] = review_data['yelp_rating'].fillna(0)  # fill empty fields with 0
-
     return review_data
 
 
