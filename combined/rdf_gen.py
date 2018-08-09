@@ -9,7 +9,6 @@ import string
 import shutil
 
 
-
 def run_sentiments(input, output_dir):
     g = Graph()
     if os.path.exists(os.path.dirname(output_dir)):
@@ -37,7 +36,10 @@ def run_sentiments(input, output_dir):
             sentiment = re.findall('\[.*?\]',text) #find the sentiment between the brackets
             total = 0
             for sent in sentiment:
-                total += int(sent[1])
+                try:
+                    total += int(sent[1])
+                except:
+                    pass
             total = total/len(sentiment)
             #print(total) #total score per review -- average over reviews later on
             with open('resources/review_score.csv', mode="a") as file:
@@ -73,11 +75,13 @@ def run_sentiments(input, output_dir):
     shutil.rmtree(output_dir)  #new directory is deleted
     #os.system("rm -rf " + output_dir)
 
+
 def run_keywords(output_dir):
     g = Graph()
     g.parse("resources/slipo_keywords.nt", format="nt")
     hasKeyword = URIRef("http://slipo.eu/hasKeyword")
-    hasSubCategory = URIRef("http://slipo.eu/hasSubCategory")
+    hasYelpCategory = URIRef("http://slipo.eu/hasYelpCategory")
+    hasTomtomCategory = URIRef("http://slipo.eu/hasTomtomCategory")
     hasRating = URIRef("http://slipo.eu/hasRating")
     data = pd.read_csv(output_dir)
     n = 0
@@ -87,24 +91,29 @@ def run_keywords(output_dir):
         keywords = (data['keywords'][n])
         keyword_phrase = re.findall('\(.*?\)', keywords)  #get single keyword phrases
 
-        categories = str(data['category'][n])
-        category = categories.replace(' & ', '&')
-        category = category.split(" ")
-        for text in category:
-            text = text.replace('[', '').replace(']', '').replace("'", '')
-            if text != "" and text != "0":
-                g.add((poiid, hasSubCategory, Literal(text)))
-
         for phrase in keyword_phrase:
             phrase = phrase.split(',') #getting rid of numbers
             text = phrase[0].replace('(','')  #getting rid of opening parenthesis in the beginning
             g.add((poiid, hasKeyword, Literal(text)))
 
+        categories = str(data['yelp_category'][n])
+        category = categories.replace(' & ', '&')
+        category = category.split(" ")
+        for text in category:
+            text = text.replace('[', '').replace(']', '').replace("'", '')
+            if text != "" and text != "0":
+                g.add((poiid, hasYelpCategory, Literal(text)))
 
         rating = data['yelp_rating'][n]
         if rating != 0.0:
             g.add((poiid, hasRating, Literal(rating)))
+
+        tomtomCategory = str(data['tomtom_category'][n])
+        g.add((poiid, hasTomtomCategory, Literal(tomtomCategory)))
+
+
         n += 1
+
 
     g.serialize(destination = "resources/slipo_keywords.nt", format='nt')
 
