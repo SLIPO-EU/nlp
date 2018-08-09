@@ -1,6 +1,5 @@
 #from __future__ import unicode_literals
 
-
 def run(jar, input, output_tomtom_extractor, yelp_output_csv, output_directory_yelp, output_directory_nlp):
     print("Ready")
     #run_tomtomextractor(jar, input, output_tomtom_extractor)
@@ -25,13 +24,14 @@ def run_tomtomextractor(jar, input, output_tomtom_extractor):
 
 def run_yelp_query(output_tomtom_extractor, output_directory_yelp, output_csv): #it is only possible to make ~2500 queries per day
     import yelp_core
+    import config as cfg
     print("call yelp query")
     try:
         print('Test')
         yelp_core.run(output_tomtom_extractor,
                   output_directory_yelp,
                   output_csv,
-                  token='Bearer TOKEN1',
+                  token='Bearer ' + cfg.token['token1'],
                   )
     except:
         print("ERROR - too many requests1")
@@ -40,7 +40,7 @@ def run_yelp_query(output_tomtom_extractor, output_directory_yelp, output_csv): 
         yelp_core.run(output_tomtom_extractor,
                   output_directory_yelp,
                   output_csv,
-                  token='Bearer TOKEN2',
+                  token='Bearer ' + cfg.token['token2'],
                   )
     except:
         print("ERROR - too many requests2")
@@ -49,7 +49,7 @@ def run_yelp_query(output_tomtom_extractor, output_directory_yelp, output_csv): 
         yelp_core.run(output_tomtom_extractor,
                   output_directory_yelp,
                   output_csv,
-                  token='Bearer TOKEN3',
+                  token='Bearer ' + cfg.token['token3'],
                   )
     except:
         print("ERROR - too many requests3")
@@ -58,7 +58,7 @@ def run_yelp_query(output_tomtom_extractor, output_directory_yelp, output_csv): 
         yelp_core.run(output_tomtom_extractor,
                   output_directory_yelp,
                   output_csv,
-                  token='Bearer TOKEN4',
+                  token='Bearer ' + cfg.token['token4'],
                   )
     except:
         print("ERROR - too many requests4")
@@ -98,5 +98,6 @@ output_directory_yelp = "resources/output_wanted"  # directory where yelp entrie
 output_csv = "resources/yelp_result_wanted_categories.csv"  # csv file - output of yelp queries, input for keyword extraction
 output__directory_nlp = "resources/output_new"  # output directory for nlp- scala/spark output
 
-run(jar, input, output_tomtom_extractor, output_csv, output_directory_yelp, output__directory_nlp)
+
+#run(jar, input, output_tomtom_extractor, output_csv, output_directory_yelp, output__directory_nlp)
 
