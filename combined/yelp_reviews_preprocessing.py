@@ -195,6 +195,8 @@ def run(input):
     review_data['text'] = review_data['text'].apply(textCleaning)  # clean text
     review_data['bag_of_words'] = review_data['text'].apply(textPrepocessing)  # create bag of word
     review_data['yelp_rating'] = review_data['yelp_rating'].fillna(0)  # fill empty fields with 0
+    review_data['is_closed'] = review_data['is_closed'].fillna('none')
+    review_data['price'] = review_data['price'].fillna('none')
     return review_data
 
 

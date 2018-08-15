@@ -218,10 +218,12 @@ review_data = pd.read_csv('resources/preprocessed_results.csv')
 
 # merge by business_id, combine text
 business = review_data
-business = review_data.groupby(['business_id', 'name', 'poiid', 'yelp_category', 'tomtom_category']).agg(
-    {'text': lambda x: ' '.join(x), 'bag_of_words': lambda x: ' '.join(x), 'yelp_rating': 'mean'})
-# business = business.reset_index()
 
+business = review_data.groupby(
+    ['business_id', 'name', 'poiid', 'yelp_category', 'tomtom_category', 'is_closed', 'price']).agg(
+    {'text': lambda x: ' '.join(x), 'bag_of_words': lambda x: ' '.join(x), 'yelp_rating': 'mean',
+     'review_count': 'mean'})
+# business = business.reset_index()
 business['tdidf_words'] = ""  # create new row
 business['cleaned_nouns'] = ""  # create new row
 

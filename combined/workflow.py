@@ -1,5 +1,3 @@
-#from __future__ import unicode_literals
-
 def run(jar, input, output_tomtom_extractor, yelp_output_csv, output_directory_yelp, output_directory_nlp):
     print("Ready")
     #run_tomtomextractor(jar, input, output_tomtom_extractor)
@@ -99,5 +97,5 @@ output_csv = "resources/yelp_result_wanted_categories.csv"  # csv file - output 
 output__directory_nlp = "resources/output_new"  # output directory for nlp- scala/spark output
 
 
-#run(jar, input, output_tomtom_extractor, output_csv, output_directory_yelp, output__directory_nlp)
+run(jar, input, output_tomtom_extractor, output_csv, output_directory_yelp, output__directory_nlp)
 

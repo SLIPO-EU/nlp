@@ -20,7 +20,10 @@ def query_yelp(name, latitude, longitude, token, output_dir, poiid, output_csv, 
               business {\
                 name\
                 id\
+                is_closed\
+                price\
                 rating\
+                review_count\
                 categories {\
                      title\
                  }\
@@ -62,6 +65,9 @@ def handle_yelp_results(result, output_dir,poiid, output_csv, category):
             for category in business['categories']:
                 text += category['title'].encode('utf-8').strip() + " "
             text += "," + str(business['rating']) + "," + category
+            text += "," + str(business['is_closed'])
+            text += "," + str(business['price'])
+            text += "," + str(business['review_count']) + ","
             with open(output_csv, "a") as file:
                 file.write('\n' + text)
 

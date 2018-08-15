@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import subprocess
 import os
 from rdflib import Graph
@@ -83,6 +84,9 @@ def run_keywords(output_dir):
     hasYelpCategory = URIRef("http://slipo.eu/hasYelpCategory")
     hasTomtomCategory = URIRef("http://slipo.eu/hasTomtomCategory")
     hasRating = URIRef("http://slipo.eu/hasRating")
+    isClosed = URIRef("http://slipo.eu/isClosed")
+    reviewCount = URIRef("http://slipo.eu/hasNoReviews")
+    hasPriceLevel = URIRef("http://slipo.eu/hasPriceLevel")
     data = pd.read_csv(output_dir)
     n = 0
     while n<len(data):
@@ -111,6 +115,24 @@ def run_keywords(output_dir):
         tomtomCategory = str(data['tomtom_category'][n])
         g.add((poiid, hasTomtomCategory, Literal(tomtomCategory)))
 
+        is_closed = str(data['is_closed'][n])
+        if is_closed != 'none' and is_closed != 'None':
+            g.add((poiid, isClosed, Literal(is_closed.replace('$', '$').encode('utf-8'))))
+
+        review_count = (data['review_count'][n])
+        if is_closed != 'none':
+            g.add((poiid, reviewCount, Literal(int(review_count))))
+
+        price_level = data['price'][n]
+        if price_level != 'none' and price_level != 'None':
+            if price_level == '€':
+                g.add((poiid, hasPriceLevel, Literal('low')))
+            if price_level == '€€':
+                g.add((poiid, hasPriceLevel, Literal('medium-low')))
+            if price_level == '€€€':
+                g.add((poiid, hasPriceLevel, Literal('medium-high')))
+            if price_level == '€€€€':
+                g.add((poiid, hasPriceLevel, Literal('high')))
 
         n += 1
 
