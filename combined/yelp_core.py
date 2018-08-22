@@ -5,8 +5,6 @@ import os
 import csv
 import json
 import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 output_saved = "tempstore_neu.txt"
 
 
@@ -57,7 +55,8 @@ def handle_yelp_results(result, output_dir,poiid, output_csv, category):
             print("Found review " + review['id'].encode('utf-8').strip())
             output_file = output_dir + "/" + \
                           business['id'].encode('utf-8').strip() + "_" + \
-                          business['name'].replace("/", "").replace(" ", "").replace("'", "").encode('utf-8').strip() + "_" + \
+                          business['name'].replace("/", "").replace(" ", "").replace("'", "")\
+                          + "_" + \
                           review['id'] + \
                           ".txt "
             write_file(output_file, poiid + ',' + review['text'].encode('utf-8').strip())
