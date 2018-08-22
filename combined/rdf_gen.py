@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# encoding=utf8
 import subprocess
 import os
 from rdflib import Graph
@@ -8,6 +8,10 @@ import pandas as pd
 import random
 import string
 import shutil
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 
 def run_sentiments(input, output_dir):
@@ -79,7 +83,7 @@ def run_sentiments(input, output_dir):
 
 def run_keywords(output_dir):
     g = Graph()
-    g.parse("resources/slipo_keywords.nt", format="nt")
+    #g.parse("resources/slipo_keywords.nt", format="nt")
     hasKeyword = URIRef("http://slipo.eu/hasKeyword")
     hasYelpCategory = URIRef("http://slipo.eu/hasYelpCategory")
     hasTomtomCategory = URIRef("http://slipo.eu/hasTomtomCategory")
@@ -100,7 +104,7 @@ def run_keywords(output_dir):
             text = phrase[0].replace('(','')  #getting rid of opening parenthesis in the beginning
             g.add((poiid, hasKeyword, Literal(text)))
 
-        categories = str(data['yelp_category'][n])
+        categories = str(data['yelp_category'][n]).encode('utf-8')
         category = categories.replace(' & ', '&')
         category = category.split(" ")
         for text in category:
@@ -112,12 +116,12 @@ def run_keywords(output_dir):
         if rating != 0.0:
             g.add((poiid, hasRating, Literal(rating)))
 
-        tomtomCategory = str(data['tomtom_category'][n])
+        tomtomCategory = str(data['tomtom_category'][n])#.decode('unicode_escape')
         g.add((poiid, hasTomtomCategory, Literal(tomtomCategory)))
-
+        print(tomtomCategory)
         is_closed = str(data['is_closed'][n])
         if is_closed != 'none' and is_closed != 'None':
-            g.add((poiid, isClosed, Literal(is_closed.replace('$', '$').encode('utf-8'))))
+            g.add((poiid, isClosed, Literal(is_closed)))
 
         review_count = (data['review_count'][n])
         if is_closed != 'none':
@@ -136,6 +140,25 @@ def run_keywords(output_dir):
 
         n += 1
 
+    #g.parse("resources/slipo_keywords.nt", format="ttl")
+    #import pprint
+    #for stmt in g:
+    #   pprint.pprint(stmt)
 
-    g.serialize(destination = "resources/slipo_keywords.nt", format='nt')
+    #for o in g.objects(None,None):
+    #    o.encode('utf-8')
+    #    o = o.encode('utf-8').decode('unicode-escape').encode('latin1').decode('utf-8')
+    #    print(o)
+
+
+    g.serialize(destination='resources/slipo_keywords.nt', format='nt')
+
+def to_unicode():
+    with open('resources/slipo_keywords.nt') as f:
+        for line in f:
+            print(line)
+            new_line = (line.decode('unicode_escape'))
+            print(new_line)
+            file_new = open('resources/slipo_keywords_new.nt', 'ab')
+            file_new.write(new_line)
 
