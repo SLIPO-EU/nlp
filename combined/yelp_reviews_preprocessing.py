@@ -4,6 +4,7 @@
 """
 from __future__ import unicode_literals
 import sys
+import re
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -18,9 +19,6 @@ from nltk.corpus import stopwords
 from nltk.corpus import wordnet
 import multiprocessing as mp
 from autocorrect import spell
-import shutil
-
-READ_BUFFER = 2 ** 13
 
 ''' 
 ================================================================================
@@ -41,6 +39,8 @@ def lineBreaksCleaner(text):
     s = s.replace('\n\n', ' ')
     s = s.replace('\n', ' ')
     s = s.replace('\r', ' ')
+    #s = re.sub(r'http\S+', '', s)
+    #s = re.sub('@[^\s]+', '', s)
     s = re.sub('\s\s+', ' ', s)  # extra spaces
     return s
 
@@ -167,21 +167,19 @@ def delete_dir(folder_name):
 
 """
 ================================================================================
- ### Main function
+ ### Main function, runs in parallel
 ================================================================================        
 """
 
 def main(input):
     pool = mp.Pool()
     chunks = split(input)
-    print(chunks)
-    result = pool.map(run, chunks)
+    result = pool.map(run, chunks) # here the parallel processes start
     pool.close()
     pool.join()
-    combined = pd.concat(result)
+    combined = pd.concat(result) #the results are joined in one file
     combined = combined.reset_index()
     combined.to_csv('resources/preprocessed_results.csv', encoding='utf-8', index=False)  # save to file
-    print(combined)
     delete_dir('resources/chunks') #delete files of chunks
 
 
@@ -194,7 +192,8 @@ def run(input):
 
     review_data['text'] = review_data['text'].apply(textCleaning)  # clean text
     review_data['bag_of_words'] = review_data['text'].apply(textPrepocessing)  # create bag of word
-    review_data['yelp_rating'] = review_data['yelp_rating'].fillna(0)  # fill empty fields with 0
+    review_data['yelp_rating'] = review_data['yelp_rating'].fillna(0)
+    review_data['review_count'] = review_data['review_count'].fillna(0.0) # fill empty fields with 0
     review_data['is_closed'] = review_data['is_closed'].fillna('none')
     review_data['price'] = review_data['price'].fillna('none')
     return review_data
@@ -202,7 +201,7 @@ def run(input):
 
 """
 ================================================================================
-### Split files for parallel processing
+### Split files for parallel processing, in as many files as there are cores 
 ================================================================================        
 """
 
@@ -217,6 +216,3 @@ def split(input):
     for x in files:
         files_path.append('resources/chunks/' + x)
     return files_path
-
-
-
