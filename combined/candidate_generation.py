@@ -18,9 +18,11 @@ from nltk.chunk import RegexpParser
 from nltk.corpus import wordnet as wn
 from nltk.stem import WordNetLemmatizer
 
-from ult.rake import Rake
+from ult.rake import Rake as Rake1
 from collections import Counter
 from sematch.semantic.similarity import WordNetSimilarity
+import rake_nltk
+from rake_nltk import Rake as Rake2
 
 """
 ================================================================================
@@ -92,7 +94,7 @@ def remove_duplicates(l):
 
 # extract keyphrases using Rake lib
 def keywords_extraction(text):
-    rake = Rake("resources/SmartStoplist.txt")
+    rake = Rake1("resources/SmartStoplist.txt")
     text_b = TextBlob(text)
     cleaned_tokens = [x for x in text_b.words]
     cleaned = " ".join(cleaned_tokens)
@@ -209,33 +211,67 @@ def prune_nouns(business):
     return cleaned_nouns
 
 
+def rake(text):
+    r = Rake2(min_length=1, max_length=3)
+    r.extract_keywords_from_text(text)
+    keywords = r.get_ranked_phrases()
+    print(keywords)
+    return keywords
+
+
+def get_all_categories(
+        input):  # for each business found we run through the whole data file to get all tomtom categories for this business
+    df = pd.read_csv(input, delimiter=',')
+    full_data = pd.read_csv('resources/data_with_all_tomtomcategories.csv', delimiter=';')
+    m = 0
+    while m < len(df):
+        poiid = df['poiid'][m]
+        print(poiid)
+        counter = 0
+        for row in full_data['poiid']:
+            if poiid == row:
+                df['tomtom_category'][m] += ';' + full_data['category'][counter]
+            counter += 1
+        m += 1
+    print(df)
+    df.to_csv('resources/yelp_business_nouns_withallcategories.csv', encoding='utf-8', index=False)
+
+
 """
 ================================================================================
  ### Main function
 ================================================================================        
 """
-review_data = pd.read_csv('resources/preprocessed_results.csv')
 
-# merge by business_id, combine text
-business = review_data
 
-business = review_data.groupby(
-    ['business_id', 'name', 'poiid', 'yelp_category', 'tomtom_category', 'is_closed', 'price']).agg(
-    {'text': lambda x: ' '.join(x), 'bag_of_words': lambda x: ' '.join(x), 'yelp_rating': 'mean',
-     'review_count': 'mean'})
-# business = business.reset_index()
-business['tdidf_words'] = ""  # create new row
-business['cleaned_nouns'] = ""  # create new row
+def run():
+    review_data = pd.read_csv('resources/preprocessed_results.csv')
+    for count in review_data['review_count']:
+        print count
+        count = int(float(count))
 
-# most_important_words_tfidf(business, 30)
-business['keywords'] = business['text'].apply(keywords_extraction)
-business['tagged_sentences'] = business['text'].apply(tagged_sents)
-business['nouns'] = business['tagged_sentences'].apply(tagged_nouns)
-business['nouns_chunks'] = business['tagged_sentences'].apply(get_chunks)
+    # merge by business_id, combine text
+    business = review_data.groupby(
+        ['business_id', 'name', 'poiid', 'yelp_category', 'tomtom_category', 'is_closed', 'price']).agg(
+        {'text': lambda x: ' '.join(x), 'bag_of_words': lambda x: ' '.join(x), 'yelp_rating': 'mean',
+         'review_count': 'mean'})
+    business = business.reset_index()
 
-prune_nouns(business)
+    # business['tdidf_words'] = "" # create new row
+    # business['cleaned_nouns'] = "" # create new row
+    business['keywords_rake'] = business.apply(lambda row: rake(row['text']), axis=1)
 
-business = business.reset_index()  # drop index
-business.drop(['tdidf_words', 'tagged_sentences', 'text', 'bag_of_words'], axis=1, inplace=True)  # remove columns
-business.to_csv('resources/business_nouns.csv', encoding='utf-8', index=False)  # save to file
+    # most_important_words_tfidf(business, 30)
+    business['keywords'] = business['text'].apply(keywords_extraction)
+    # business['tagged_sentences'] = business['text'].apply(tagged_sents)
+    # business['nouns'] = business['tagged_sentences'].apply(tagged_nouns)
+    # business['nouns_chunks'] = business['tagged_sentences'].apply(get_chunks)
+
+    # prune_nouns(business)
+
+    # business = business.reset_index()  #drop index
+    business.drop(['text', 'bag_of_words'], axis=1, inplace=True)  # remove columns
+    business.to_csv('resources/business_nouns.csv', encoding='utf-8', index=False)  # save to file
+    get_all_categories(
+        'resources/business_nouns.csv')  # get all tomtom categories for the businesses that were found on yelp
 
