@@ -1,19 +1,20 @@
 def run(jar, input, output_tomtom_extractor, yelp_output_csv, output_directory_yelp, output_directory_nlp):
     print("Ready")
-    #run_tomtomextractor(jar, input, output_tomtom_extractor)
-    #run_yelp_query(output_tomtom_extractor, output_directory_yelp, output_csv)
+    run_tomtomextractor(jar, input, output_tomtom_extractor)
+    run_yelp_query(output_tomtom_extractor, output_directory_yelp, output_csv)
     run_keyword_extraction(yelp_output_csv)
     print("keyword extraction done")
-    run_rdf_gen('resources/business_nouns.csv', output_directory_nlp)
+    run_rdf_gen('resources/yelp_business_nouns_withallcategories.csv', output_directory_nlp) #business_nouns is output file of keyword extraction
 
 
 def run_rdf_gen(input, output_directory_nlp):
     import rdf_gen
     rdf_gen.run_keywords(input)
-    rdf_gen.run_sentiments(output_directory_yelp, output_directory_nlp)
+    rdf_gen.run_sentiments(output_directory_yelp, output_directory_nlp) #sentiment and NLP analysis is done here, and in the same step written to the rdf output file
+    rdf_gen.to_unicode() #this function is used to show all unicode characters correctly, as the original .nt file does not show them correct
 
 
-def run_tomtomextractor(jar, input, output_tomtom_extractor):
+def run_tomtomextractor(jar, input, output_tomtom_extractor): # call subprocess to run the tomtom extractor jar
     import subprocess
     print("call tomtomextractor.jar")
     subprocess.call('java -jar ' + jar + " " + input + " " + output_tomtom_extractor, shell=True)
@@ -69,21 +70,18 @@ def run_keyword_extraction(yelp_output_csv):
     clear_csv()
     yelp_reviews_preprocessing.main(yelp_output_csv)
     import candidate_generation
-    candidate_generation
+    candidate_generation.run()
     print("finished keyword extraction")
 
 
 def clear_csv():  # clear all temporary csv files before running another round of keyword extraction
     filename = "resources/business_nouns.csv"
-    # opening the file with w+ mode truncates the file
     f = open(filename, "w+")
     f.close()
     filename = "resources/preprocessed_results.csv"
-    # opening the file with w+ mode truncates the file
     f = open(filename, "w+")
     f.close()
     filename = "resources/review_score.csv"
-    # opening the file with w+ mode truncates the file
     f = open(filename, "w+")
     f.write("poiid,score")
     f.close()
@@ -91,9 +89,9 @@ def clear_csv():  # clear all temporary csv files before running another round o
 
 jar = "resources/tomtomextractor.jar"  # location of tomtomjar
 input = "resources/tomtom_pois_austria_v0.3.nt"   # original tomtom file with pois ontology
-output_tomtom_extractor = "resources/data.csv"  # file where tomtom extractor stores data.csv, input for yelp queries
-output_directory_yelp = "resources/output_wanted"  # directory where yelp entries are saved as files,input for nlp analysis
-output_csv = "resources/yelp_result_wanted_categories.csv"  # csv file - output of yelp queries, input for keyword extraction
+output_tomtom_extractor = "resources/tomtom_pois_austria_v0.3_unique.csv"  # file where tomtom extractor stores data.csv, input for yelp queries
+output_directory_yelp = "resources/output_all"  # directory where yelp entries are saved as files,input for nlp analysis
+output_csv = "resources/yelp_result_all.csv"  # csv file - output of yelp queries, input for keyword extraction
 output__directory_nlp = "resources/output_new"  # output directory for nlp- scala/spark output
 
 
