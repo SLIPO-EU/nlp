@@ -16,17 +16,20 @@ sys.setdefaultencoding('utf-8')
 
 def run_sentiments(input, output_dir):
     g = Graph()
+
+    #create new random directory name for output files of nlp, if directory already exists program will fail
     if os.path.exists(os.path.dirname(output_dir)):
         output_dir = output_dir + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(4))
         print(output_dir)
 
     g.parse("resources/slipo_keywords.nt", format="nt")
+
     hasSentiment = URIRef("http://slipo.eu/hasSentiment")
     hasPerson = URIRef("http://slipo.eu/hasPerson")
     hasOrganization = URIRef("http://slipo.eu/hasOrganization")
     hasLocation = URIRef("http://slipo.eu/hasLocation")
 
-    subprocess.call('spark-submit --class PreprocSpark --packages databricks:spark-corenlp:0.2.0-s_2.11 --jars '
+    subprocess.call('spark-submit --class PreprocSpark --packages databricks:spark-corenlp:0.2.0-s_2.11 --jars ' #call new subprocess to execute nlp program
                    'resources/stanford-english-corenlp-2016-10-31-models.jar resources/sparknlp_2.11-0.1.jar '
                    '' + input + ' ' + output_dir, shell=True)
 
@@ -38,7 +41,7 @@ def run_sentiments(input, output_dir):
         if(item != '_SUCCESS' and item[0]!= "."):
             poiid = text.split(',')[0]
             poiid = URIRef(poiid.replace(' ', '').replace('|0', '').replace('|O',''))
-            sentiment = re.findall('\[.*?\]',text) #find the sentiment between the brackets
+            sentiment = re.findall('\[.*?\]',text) #get sentiment between the brackets
             total = 0
             for sent in sentiment:
                 try:
@@ -46,7 +49,7 @@ def run_sentiments(input, output_dir):
                 except:
                     pass
             total = total/len(sentiment)
-            #print(total) #total score per review -- average over reviews later on
+            #total score per review -- average over reviews later on
             with open('resources/review_score.csv', mode="a") as file:
                 file.write(('\n' + str(poiid) + "," + str(total)))
 
@@ -83,7 +86,7 @@ def run_sentiments(input, output_dir):
 
 def run_keywords(output_dir):
     g = Graph()
-    #g.parse("resources/slipo_keywords.nt", format="nt")
+
     hasKeyword = URIRef("http://slipo.eu/hasKeyword")
     hasYelpCategory = URIRef("http://slipo.eu/hasYelpCategory")
     hasTomtomCategory = URIRef("http://slipo.eu/hasTomtomCategory")
@@ -91,6 +94,7 @@ def run_keywords(output_dir):
     isClosed = URIRef("http://slipo.eu/isClosed")
     reviewCount = URIRef("http://slipo.eu/hasNoReviews")
     hasPriceLevel = URIRef("http://slipo.eu/hasPriceLevel")
+
     data = pd.read_csv(output_dir)
     n = 0
     while n<len(data):
@@ -104,11 +108,10 @@ def run_keywords(output_dir):
             text = phrase[0].replace('(','')  #getting rid of opening parenthesis in the beginning
             g.add((poiid, hasKeyword, Literal(text)))
 
-        categories = str(data['yelp_category'][n]).encode('utf-8')
-        category = categories.replace(' & ', '&')
-        category = category.split(" ")
+        categories = data['yelp_category'][n]
+        category = categories.split(";")
         for text in category:
-            text = text.replace('[', '').replace(']', '').replace("'", '')
+            text = text.replace('[', '').replace(']', '').replace("'", '').strip()
             if text != "" and text != "0":
                 g.add((poiid, hasYelpCategory, Literal(text)))
 
@@ -116,9 +119,13 @@ def run_keywords(output_dir):
         if rating != 0.0:
             g.add((poiid, hasRating, Literal(rating)))
 
-        tomtomCategory = str(data['tomtom_category'][n])#.decode('unicode_escape')
-        g.add((poiid, hasTomtomCategory, Literal(tomtomCategory)))
-        print(tomtomCategory)
+        tomtomCategories = str(data['tomtom_category'][n])
+        tomtomCategory = tomtomCategories.split(";")
+        for text in tomtomCategory:
+            texttomtom = text.replace('[', '').replace(']', '').replace("'", '').strip()
+            if texttomtom != "" and texttomtom != "0":
+                g.add((poiid, hasTomtomCategory, Literal(texttomtom)))
+
         is_closed = str(data['is_closed'][n])
         if is_closed != 'none' and is_closed != 'None':
             g.add((poiid, isClosed, Literal(is_closed)))
@@ -137,28 +144,17 @@ def run_keywords(output_dir):
                 g.add((poiid, hasPriceLevel, Literal('medium-high')))
             if price_level == '€€€€':
                 g.add((poiid, hasPriceLevel, Literal('high')))
-
         n += 1
-
-    #g.parse("resources/slipo_keywords.nt", format="ttl")
-    #import pprint
-    #for stmt in g:
-    #   pprint.pprint(stmt)
-
-    #for o in g.objects(None,None):
-    #    o.encode('utf-8')
-    #    o = o.encode('utf-8').decode('unicode-escape').encode('latin1').decode('utf-8')
-    #    print(o)
-
 
     g.serialize(destination='resources/slipo_keywords.nt', format='nt')
 
+#generated nt file does not show unicode symbols properly, to pretty print them use following function
 def to_unicode():
     with open('resources/slipo_keywords.nt') as f:
         for line in f:
             print(line)
             new_line = (line.decode('unicode_escape'))
             print(new_line)
-            file_new = open('resources/slipo_keywords_new.nt', 'ab')
+            file_new = open('resources/slipo_keywords.nt', 'a')
             file_new.write(new_line)
 
